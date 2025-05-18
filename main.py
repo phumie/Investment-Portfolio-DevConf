@@ -41,7 +41,33 @@ def show_header():
         st.title("Settings")
         
         if st.button("Toggle Theme (Light/Dark)"):
+            # Toggle the theme in session state
             st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+            
+            # Apply the theme based on the session state
+            if st.session_state.theme == "dark":
+                st.markdown("""
+                <style>
+                :root {
+                    --background-color: #0e1117;
+                    --secondary-background-color: #262730;
+                    --text-color: #fafafa;
+                    --font: "sans serif";
+                }
+                </style>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <style>
+                :root {
+                    --background-color: #ffffff;
+                    --secondary-background-color: #f0f2f6;
+                    --text-color: #262730;
+                    --font: "sans serif";
+                }
+                </style>
+                """, unsafe_allow_html=True)
+            
             st.rerun()
         
         # Add info about the current theme
