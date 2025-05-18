@@ -282,3 +282,64 @@ def show_dashboard_page():
             display_etf_performance_chart(selected_etfs_for_chart)
         else:
             st.info("Please select ETFs to compare their performance")
+            
+    # Tab 4: Portfolio History
+    with tab4:
+        st.subheader("Portfolio History")
+        
+        from database.db_service import get_portfolio_snapshot_history, get_latest_portfolio_snapshot
+        
+        # Get portfolio history
+        snapshots = get_portfolio_snapshot_history(user.id)
+        
+        if not snapshots:
+            st.info("No portfolio history available yet. Make changes to your portfolio to create snapshots.")
+        else:
+            # Display portfolio value history
+            st.subheader("Portfolio Value History")
+            
+            # Create dataframe for chart
+            snapshot_data = {
+                'date': [snapshot.snapshot_date for snapshot in snapshots],
+                'value': [snapshot.portfolio_value for snapshot in snapshots],
+                'alpha': [snapshot.alpha_vs_sp500 * 100 for snapshot in snapshots]  # Convert to percentage
+            }
+            snapshot_df = pd.DataFrame(snapshot_data)
+            
+            # Sort by date ascending
+            snapshot_df = snapshot_df.sort_values('date')
+            
+            # Display line chart
+            st.line_chart(snapshot_df.set_index('date')['value'])
+            
+            # Display alpha vs S&P 500
+            st.subheader("Alpha vs S&P 500 History")
+            st.line_chart(snapshot_df.set_index('date')['alpha'])
+            
+            # Get latest snapshot
+            latest_snapshot = get_latest_portfolio_snapshot(user.id)
+            
+            if latest_snapshot:
+                st.subheader("Latest Portfolio Composition")
+                
+                # Get ETF snapshots from the latest portfolio snapshot
+                etf_snapshots = latest_snapshot.etf_snapshots
+                
+                if etf_snapshots:
+                    # Convert to dataframe
+                    etf_data = []
+                    for etf in etf_snapshots:
+                        etf_data.append({
+                            'Symbol': etf.etf_symbol,
+                            'Name': etf.etf_name,
+                            'Allocation (%)': f"{etf.allocation_percentage * 100:.2f}%",
+                            'Value (ZAR)': f"R{etf.value:,.2f}",
+                            '1Y Return (%)': f"{etf.return_1y * 100:.2f}%",
+                            '3Y Return (%)': f"{etf.return_3y * 100:.2f}%",
+                            '5Y Return (%)': f"{etf.return_5y * 100:.2f}%"
+                        })
+                    
+                    etf_df = pd.DataFrame(etf_data)
+                    
+                    # Display dataframe
+                    st.dataframe(etf_df, hide_index=True)
