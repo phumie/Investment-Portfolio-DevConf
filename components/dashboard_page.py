@@ -94,25 +94,45 @@ def show_dashboard_page():
             
             # Tech ETFs
             tech_etfs = get_tech_etfs()
-            tech_etf_options = [etf['symbol'] for etf in tech_etfs]
+            tech_etf_options = [f"{etf['symbol']} - {etf['name']}" for etf in tech_etfs]
+            tech_etf_symbols = [etf['symbol'] for etf in tech_etfs]
             user_tech_etfs = user.tech_etfs.split(',') if user.tech_etfs else []
             
-            new_selected_tech_etfs = st.multiselect(
+            # Create the display options for the currently selected ETFs
+            user_tech_etf_options = []
+            for symbol in user_tech_etfs:
+                for etf in tech_etfs:
+                    if etf['symbol'] == symbol:
+                        user_tech_etf_options.append(f"{symbol} - {etf['name']}")
+            
+            new_selected_tech_etf_options = st.multiselect(
                 "Tech ETFs",
                 options=tech_etf_options,
-                default=user_tech_etfs
+                default=user_tech_etf_options
             )
+            # Extract just the symbol from the selected options
+            new_selected_tech_etfs = [option.split(" - ")[0] for option in new_selected_tech_etf_options]
             
             # Complementary ETFs
             complementary_etfs = get_complementary_etfs()
-            complementary_etf_options = [etf['symbol'] for etf in complementary_etfs]
+            complementary_etf_options = [f"{etf['symbol']} - {etf['name']}" for etf in complementary_etfs]
+            complementary_etf_symbols = [etf['symbol'] for etf in complementary_etfs]
             user_complementary_etfs = user.complementary_etfs.split(',') if user.complementary_etfs else []
             
-            new_selected_complementary_etfs = st.multiselect(
+            # Create the display options for the currently selected ETFs
+            user_complementary_etf_options = []
+            for symbol in user_complementary_etfs:
+                for etf in complementary_etfs:
+                    if etf['symbol'] == symbol:
+                        user_complementary_etf_options.append(f"{symbol} - {etf['name']}")
+            
+            new_selected_complementary_etf_options = st.multiselect(
                 "Complementary ETFs",
                 options=complementary_etf_options,
-                default=user_complementary_etfs
+                default=user_complementary_etf_options
             )
+            # Extract just the symbol from the selected options
+            new_selected_complementary_etfs = [option.split(" - ")[0] for option in new_selected_complementary_etf_options]
             
             # Update button
             update_submitted = st.form_submit_button("Update Portfolio")
@@ -239,12 +259,24 @@ def show_dashboard_page():
         user_tech_etfs = user.tech_etfs.split(',') if user.tech_etfs else []
         user_complementary_etfs = user.complementary_etfs.split(',') if user.complementary_etfs else []
         
-        # ETF selection for chart
-        selected_etfs_for_chart = st.multiselect(
+        # Get ETF details for display
+        tech_etfs_map = {etf['symbol']: etf['name'] for etf in get_tech_etfs()}
+        comp_etfs_map = {etf['symbol']: etf['name'] for etf in get_complementary_etfs()}
+        etfs_map = {**tech_etfs_map, **comp_etfs_map}
+        
+        # Create options for the multiselect with both symbol and name
+        etf_options = [f"{symbol} - {etfs_map.get(symbol, symbol)}" for symbol in user_tech_etfs + user_complementary_etfs]
+        default_options = []
+        if user_tech_etfs and user_complementary_etfs:
+            default_options = [f"{symbol} - {etfs_map.get(symbol, symbol)}" for symbol in user_tech_etfs[:2] + user_complementary_etfs[:1]]
+        
+        selected_etf_options = st.multiselect(
             "Select ETFs to Compare",
-            options=user_tech_etfs + user_complementary_etfs,
-            default=user_tech_etfs[:2] + user_complementary_etfs[:1] if user_tech_etfs and user_complementary_etfs else []
+            options=etf_options,
+            default=default_options
         )
+        # Extract just the symbols from the selected options
+        selected_etfs_for_chart = [option.split(" - ")[0] for option in selected_etf_options]
         
         if selected_etfs_for_chart:
             display_etf_performance_chart(selected_etfs_for_chart)

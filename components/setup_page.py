@@ -99,25 +99,31 @@ def show_setup_page():
         
         # Tech ETFs
         tech_etfs = get_tech_etfs()
-        tech_etf_options = [etf['symbol'] for etf in tech_etfs]
+        tech_etf_options = [f"{etf['symbol']} - {etf['name']}" for etf in tech_etfs]
+        tech_etf_symbols = [etf['symbol'] for etf in tech_etfs]
         
-        selected_tech_etfs = st.multiselect(
+        selected_tech_etf_options = st.multiselect(
             "Select Tech ETFs",
             options=tech_etf_options,
             default=tech_etf_options[:3],
             help="Select ETFs for the tech portion of your portfolio"
         )
+        # Extract just the symbol from the selected options
+        selected_tech_etfs = [option.split(" - ")[0] for option in selected_tech_etf_options]
         
         # Complementary ETFs
         complementary_etfs = get_complementary_etfs()
-        complementary_etf_options = [etf['symbol'] for etf in complementary_etfs]
+        complementary_etf_options = [f"{etf['symbol']} - {etf['name']}" for etf in complementary_etfs]
+        complementary_etf_symbols = [etf['symbol'] for etf in complementary_etfs]
         
-        selected_complementary_etfs = st.multiselect(
+        selected_complementary_etf_options = st.multiselect(
             "Select Complementary ETFs",
             options=complementary_etf_options,
             default=complementary_etf_options[:3],
             help="Select ETFs for the complementary portion of your portfolio"
         )
+        # Extract just the symbol from the selected options
+        selected_complementary_etfs = [option.split(" - ")[0] for option in selected_complementary_etf_options]
         
         # Warn if no ETFs selected
         if not selected_tech_etfs:
@@ -161,10 +167,52 @@ def show_setup_page():
                 st.success("Portfolio created successfully! Redirecting to dashboard...")
                 st.rerun()
 
-    # Display some information about ETFs
+    # Display some information about ETFs with tooltips
     with st.expander("Available ETF Information"):
         st.subheader("Tech ETFs")
-        st.dataframe(pd.DataFrame(tech_etfs))
+        tech_df = pd.DataFrame(tech_etfs)
+        st.dataframe(
+            tech_df,
+            column_config={
+                "symbol": st.column_config.TextColumn(
+                    "Symbol",
+                    help="ETF ticker symbol used in stock exchanges"
+                ),
+                "name": st.column_config.TextColumn(
+                    "Name",
+                    help="Full name of the ETF"
+                ),
+                "expense_ratio": st.column_config.NumberColumn(
+                    "Expense Ratio",
+                    help="Annual fee charged by the fund, expressed as a percentage of assets",
+                    format="%.4f"
+                )
+            },
+            hide_index=True
+        )
         
         st.subheader("Complementary ETFs")
-        st.dataframe(pd.DataFrame(complementary_etfs))
+        comp_df = pd.DataFrame(complementary_etfs)
+        st.dataframe(
+            comp_df,
+            column_config={
+                "symbol": st.column_config.TextColumn(
+                    "Symbol",
+                    help="ETF ticker symbol used in stock exchanges"
+                ),
+                "name": st.column_config.TextColumn(
+                    "Name",
+                    help="Full name of the ETF"
+                ),
+                "sector": st.column_config.TextColumn(
+                    "Sector",
+                    help="Market sector that the ETF focuses on"
+                ),
+                "expense_ratio": st.column_config.NumberColumn(
+                    "Expense Ratio",
+                    help="Annual fee charged by the fund, expressed as a percentage of assets",
+                    format="%.4f"
+                )
+            },
+            hide_index=True
+        )
