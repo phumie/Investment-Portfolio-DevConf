@@ -25,20 +25,13 @@ def set_page_config():
         page_title=config.APP_TITLE,
         page_icon="📊",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
 
 def show_header():
     """Display the application header"""
     st.title(config.APP_TITLE)
     st.subheader("Build and monitor your tech-focused investment portfolio")
-    
-    # Sidebar header
-    with st.sidebar:
-        st.title("Settings")
-        
-        # Add a separator
-        st.markdown("---")
 
 def main():
     """Main function to run the application"""
