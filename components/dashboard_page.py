@@ -167,7 +167,7 @@ def show_dashboard_page():
             st.rerun()
     
     # Main dashboard content
-    tab1, tab2, tab3 = st.tabs(["Portfolio Overview", "Projections", "ETF Analysis"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Portfolio Overview", "Projections", "ETF Analysis", "Portfolio History"])
     
     # Tab 1: Portfolio Overview
     with tab1:
