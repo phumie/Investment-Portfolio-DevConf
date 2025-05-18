@@ -16,9 +16,6 @@ def init_session_state():
     if "page" not in st.session_state:
         st.session_state.page = PAGES["SETUP"]
     
-    if "theme" not in st.session_state:
-        st.session_state.theme = "light"
-    
     if "user_id" not in st.session_state:
         st.session_state.user_id = None
 
@@ -36,42 +33,9 @@ def show_header():
     st.title(config.APP_TITLE)
     st.subheader("Build and monitor your tech-focused investment portfolio")
     
-    # Theme toggle in sidebar
+    # Sidebar header
     with st.sidebar:
         st.title("Settings")
-        
-        if st.button("Toggle Theme (Light/Dark)"):
-            # Toggle the theme in session state
-            st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-            
-            # Apply the theme based on the session state
-            if st.session_state.theme == "dark":
-                st.markdown("""
-                <style>
-                :root {
-                    --background-color: #0e1117;
-                    --secondary-background-color: #262730;
-                    --text-color: #fafafa;
-                    --font: "sans serif";
-                }
-                </style>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <style>
-                :root {
-                    --background-color: #ffffff;
-                    --secondary-background-color: #f0f2f6;
-                    --text-color: #262730;
-                    --font: "sans serif";
-                }
-                </style>
-                """, unsafe_allow_html=True)
-            
-            st.rerun()
-        
-        # Add info about the current theme
-        st.info(f"Current theme: {st.session_state.theme.capitalize()}")
         
         # Add a separator
         st.markdown("---")
