@@ -24,7 +24,7 @@ def init_database():
     """Initialize the database, creating tables if they don't exist"""
     # Create tables
     Base.metadata.create_all(bind=engine)
-    
+
     # Populate ETF data if not already present
     populate_etf_data()
 
@@ -39,12 +39,12 @@ def get_db_session():
 def populate_etf_data():
     """Populate the ETF table with data if it's empty"""
     db = get_db_session()
-    
+
     # Check if ETF table is empty
     etf_count = db.query(ETF).count()
     if etf_count > 0:
         return
-    
+
     # Add tech ETFs
     tech_etfs = get_tech_etfs()
     for etf_data in tech_etfs:
@@ -55,7 +55,7 @@ def populate_etf_data():
             expense_ratio=etf_data['expense_ratio']
         )
         db.add(etf)
-    
+
     # Add complementary ETFs
     complementary_etfs = get_complementary_etfs()
     for etf_data in complementary_etfs:
@@ -67,7 +67,7 @@ def populate_etf_data():
             expense_ratio=etf_data['expense_ratio']
         )
         db.add(etf)
-    
+
     db.commit()
 
 def create_user(first_name, last_name, initial_investment, monthly_contribution, 
@@ -75,11 +75,11 @@ def create_user(first_name, last_name, initial_investment, monthly_contribution,
                 risk_tolerance, tech_etfs, complementary_etfs):
     """Create a new user with portfolio settings"""
     db = get_db_session()
-    
+
     # Convert ETF lists to comma-separated strings for backward compatibility
     tech_etfs_str = ','.join(tech_etfs) if tech_etfs else ''
     complementary_etfs_str = ','.join(complementary_etfs) if complementary_etfs else ''
-    
+
     user = User(
         first_name=first_name,
         last_name=last_name,
@@ -92,17 +92,17 @@ def create_user(first_name, last_name, initial_investment, monthly_contribution,
         tech_etfs=tech_etfs_str,
         complementary_etfs=complementary_etfs_str
     )
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    
+
     # Associate ETFs with user using the relationship tables
     # First get tech ETFs
     if tech_etfs:
         tech_etf_count = len(tech_etfs)
         individual_allocation = tech_allocation / tech_etf_count
-        
+
         for symbol in tech_etfs:
             etf = db.query(ETF).filter(ETF.symbol == symbol).first()
             if etf:
@@ -112,12 +112,12 @@ def create_user(first_name, last_name, initial_investment, monthly_contribution,
                     allocation_percentage=individual_allocation
                 )
                 db.execute(statement)
-    
+
     # Then complementary ETFs
     if complementary_etfs:
         comp_etf_count = len(complementary_etfs)
         individual_allocation = complementary_allocation / comp_etf_count
-        
+
         for symbol in complementary_etfs:
             etf = db.query(ETF).filter(ETF.symbol == symbol).first()
             if etf:
@@ -127,12 +127,12 @@ def create_user(first_name, last_name, initial_investment, monthly_contribution,
                     allocation_percentage=individual_allocation
                 )
                 db.execute(statement)
-    
+
     db.commit()
-    
+
     # Create initial portfolio snapshot
     create_portfolio_snapshot(user.id)
-    
+
     return user.id
 
 def get_user_by_id(user_id):
@@ -146,12 +146,12 @@ def update_user_portfolio(user_id, initial_investment, monthly_contribution,
     """Update a user's portfolio settings"""
     db = get_db_session()
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if user:
         # Convert ETF lists to comma-separated strings for backward compatibility
         tech_etfs_str = ','.join(tech_etfs) if tech_etfs else ''
         complementary_etfs_str = ','.join(complementary_etfs) if complementary_etfs else ''
-        
+
         user.initial_investment = initial_investment
         user.monthly_contribution = monthly_contribution
         user.tech_allocation = tech_allocation
@@ -160,21 +160,21 @@ def update_user_portfolio(user_id, initial_investment, monthly_contribution,
         user.risk_tolerance = risk_tolerance
         user.tech_etfs = tech_etfs_str
         user.complementary_etfs = complementary_etfs_str
-        
+
         # Remove old ETF associations
         # For tech ETFs
         from sqlalchemy import text
         db.execute(text(f"DELETE FROM user_tech_etfs WHERE user_id = {user.id}"))
-        
+
         # For complementary ETFs
         db.execute(text(f"DELETE FROM user_complementary_etfs WHERE user_id = {user.id}"))
-        
+
         # Add new ETF associations
         # First tech ETFs
         if tech_etfs:
             tech_etf_count = len(tech_etfs)
             individual_allocation = tech_allocation / tech_etf_count
-            
+
             for symbol in tech_etfs:
                 etf = db.query(ETF).filter(ETF.symbol == symbol).first()
                 if etf:
@@ -184,12 +184,12 @@ def update_user_portfolio(user_id, initial_investment, monthly_contribution,
                         allocation_percentage=individual_allocation
                     )
                     db.execute(statement)
-        
+
         # Then complementary ETFs
         if complementary_etfs:
             comp_etf_count = len(complementary_etfs)
             individual_allocation = complementary_allocation / comp_etf_count
-            
+
             for symbol in complementary_etfs:
                 etf = db.query(ETF).filter(ETF.symbol == symbol).first()
                 if etf:
@@ -199,36 +199,36 @@ def update_user_portfolio(user_id, initial_investment, monthly_contribution,
                         allocation_percentage=individual_allocation
                     )
                     db.execute(statement)
-        
+
         db.commit()
-        
+
         # Create new portfolio snapshot
         create_portfolio_snapshot(user.id)
-        
+
         return True
-    
+
     return False
 
 def create_portfolio_snapshot(user_id):
     """Create a snapshot of the user's portfolio"""
     from services.portfolio_service import calculate_etf_allocations, get_portfolio_value
     from services.projection_service import calculate_alpha
-    
+
     db = get_db_session()
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user:
         return None
-    
+
     # Get portfolio data
     portfolio_value = get_portfolio_value(user)
     alpha_data = calculate_alpha(user)
     etf_allocations = calculate_etf_allocations(user)
-    
+
     # Create portfolio snapshot
     # Convert NumPy float64 to Python float
     alpha_value = float(alpha_data["alpha_cumulative"].iloc[-1]) if not alpha_data.empty else 0.0
-    
+
     snapshot = PortfolioSnapshot(
         user_id=user.id,
         snapshot_date=datetime.now(),
@@ -236,16 +236,16 @@ def create_portfolio_snapshot(user_id):
         cumulative_return=0.0,  # This would be calculated based on historical data
         alpha_vs_sp500=alpha_value
     )
-    
+
     db.add(snapshot)
     db.commit()
     db.refresh(snapshot)
-    
+
     # Create ETF snapshots
     for etf in etf_allocations:
         symbol = etf['symbol']
         returns = get_etf_return(symbol)
-        
+
         etf_snapshot = ETFSnapshot(
             portfolio_snapshot_id=snapshot.id,
             etf_symbol=symbol,
@@ -256,34 +256,34 @@ def create_portfolio_snapshot(user_id):
             return_3y=returns['3y'],
             return_5y=returns['5y']
         )
-        
+
         db.add(etf_snapshot)
-    
+
     db.commit()
-    
+
     return snapshot
 
 def get_latest_portfolio_snapshot(user_id):
     """Get the latest portfolio snapshot for a user"""
     db = get_db_session()
-    
+
     snapshot = db.query(PortfolioSnapshot)\
         .filter(PortfolioSnapshot.user_id == user_id)\
         .order_by(PortfolioSnapshot.snapshot_date.desc())\
         .first()
-    
+
     return snapshot
 
 def get_portfolio_snapshot_history(user_id, limit=10):
     """Get historical portfolio snapshots for a user"""
     db = get_db_session()
-    
+
     snapshots = db.query(PortfolioSnapshot)\
         .filter(PortfolioSnapshot.user_id == user_id)\
         .order_by(PortfolioSnapshot.snapshot_date.desc())\
         .limit(limit)\
         .all()
-    
+
     return snapshots
 
 # Import these at the end to avoid circular imports
