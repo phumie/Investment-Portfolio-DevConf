@@ -219,12 +219,15 @@ def create_portfolio_snapshot(user_id):
     etf_allocations = calculate_etf_allocations(user)
     
     # Create portfolio snapshot
+    # Convert NumPy float64 to Python float
+    alpha_value = float(alpha_data["alpha_cumulative"].iloc[-1]) if not alpha_data.empty else 0.0
+    
     snapshot = PortfolioSnapshot(
         user_id=user.id,
         snapshot_date=datetime.now(),
-        portfolio_value=portfolio_value,
+        portfolio_value=float(portfolio_value),
         cumulative_return=0.0,  # This would be calculated based on historical data
-        alpha_vs_sp500=alpha_data["alpha_cumulative"].iloc[-1] if not alpha_data.empty else 0.0
+        alpha_vs_sp500=alpha_value
     )
     
     db.add(snapshot)
