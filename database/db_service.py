@@ -7,8 +7,15 @@ from services.etf_service import get_tech_etfs, get_complementary_etfs, get_etf_
 import config
 from datetime import datetime
 
-# Create engine using PostgreSQL connection string
-engine = create_engine(config.DATABASE_URL)
+# Create engine using PostgreSQL connection string with retry settings
+engine = create_engine(
+    config.DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30
+)
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

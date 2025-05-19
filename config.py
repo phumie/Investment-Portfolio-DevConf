@@ -32,6 +32,14 @@ if not DATABASE_URL:
             host=PG_HOST,
             port=PG_PORT,
             database=PG_DATABASE,
+            query={
+                'sslmode': 'require',
+                'connect_timeout': '30',
+                'keepalives': '1',
+                'keepalives_idle': '30',
+                'keepalives_interval': '10',
+                'keepalives_count': '5'
+            }
         )
     else:
         # Default to SQLite if the dialect is not recognized
