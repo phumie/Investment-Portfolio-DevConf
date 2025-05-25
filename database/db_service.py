@@ -7,23 +7,31 @@ from services.etf_service import get_tech_etfs, get_complementary_etfs, get_etf_
 import config
 from datetime import datetime
 
-# Create engine using PostgreSQL connection string with retry settings
-engine = create_engine(
-    config.DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    connect_args={
-        'sslmode': 'require',
-        'connect_timeout': '30',
-        'keepalives': '1',
-        'keepalives_idle': '30',
-        'keepalives_interval': '10',
-        'keepalives_count': '5'
-    }
-)
+# Create engine with appropriate configuration based on database type
+if config.DATABASE_URL.startswith('sqlite'):
+    engine = create_engine(
+        config.DATABASE_URL,
+        pool_pre_ping=True,
+        connect_args={'check_same_thread': False}
+    )
+else:
+    # PostgreSQL configuration
+    engine = create_engine(
+        config.DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=30,
+        connect_args={
+            'sslmode': 'require',
+            'connect_timeout': '30',
+            'keepalives': '1',
+            'keepalives_idle': '30',
+            'keepalives_interval': '10',
+            'keepalives_count': '5'
+        }
+    )
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

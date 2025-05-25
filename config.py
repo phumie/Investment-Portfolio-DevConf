@@ -9,7 +9,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 # If DATABASE_URL is not available, construct it from individual components or use SQLite
 if not DATABASE_URL:
-    DB_DIALECT = os.getenv("DB_DIALECT", "postgresql")
+    DB_DIALECT = os.getenv("DB_DIALECT", "sqlite")
     
     # For SQLite (fallback)
     SQLITE_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "portfolio.db")
